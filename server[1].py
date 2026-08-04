@@ -28,7 +28,7 @@ from urllib.parse import urlparse
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "campus.db")
 FRONTEND_FILE = os.path.join(BASE_DIR, "campus-companion.html")
-PORT = 8000
+PORT = int(os.environ.get("PORT", 8000))
 SESSION_COOKIE = "campus_session"
 PBKDF2_ITERATIONS = 100_000
 
