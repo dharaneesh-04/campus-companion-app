@@ -191,9 +191,11 @@ class Handler(BaseHTTPRequestHandler):
             return self.handle_list_notes()
         if path == "/api/events":
             return self.handle_list_events()
-        self.send_json(404, {"error": "Not found"})
-        elif path == "/api/search":
+            if path == "/api/search":
     return self.handle_search_notes()
+
+        self.send_json(404, {"error": "Not found"})
+     
 
     def do_POST(self):
         path = urlparse(self.path).path
