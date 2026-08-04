@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Companion — Your Campus, Sorted</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Kalam:wght@400;700&family=Inter:wght@400;500;600&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cork:#c9a06a;
+    --cork-dark:#a97f4d;
+    --board:#8a5a34;
+    --paper:#faf6ec;
+    --ink:#22201b;
+    --navy:#1c2340;
+    --marigold:#ffb627;
+    --coral:#ff6b5e;
+    --mint:#2ec4a6;
+    --blue:#4e8fde;
+    --pin-shadow: 0 6px 14px rgba(0,0,0,0.35);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Inter', sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,0.08), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(0,0,0,0.12), transparent 40%),
+      repeating-linear-gradient(45deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 2px, transparent 2px, transparent 6px),
+      linear-gradient(160deg, var(--cork), var(--cork-dark) 60%, var(--board));
+    background-attachment:fixed;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* Texture speckles */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      radial-gradient(rgba(0,0,0,0.15) 1px, transparent 1px),
+      radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 3px 3px, 5px 5px;
+    background-position: 0 0, 2px 2px;
+    pointer-events:none;
+    z-index:0;
+    opacity:0.5;
+  }
+
+  h1,h2,h3, .headline{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .handwritten{ font-family:'Kalam', cursive; }
+  .mono{ font-family:'Space Mono', monospace; letter-spacing:0.02em;}
+
+  a{color:inherit; text-decoration:none;}
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px clamp(20px,6vw,64px);
+    background:rgba(28,35,64,0.92);
+    backdrop-filter:blur(6px);
+    box-shadow:0 4px 18px rgba(0,0,0,0.25);
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    color:var(--paper); font-size:1.25rem; font-weight:700;
+  }
+  .brand-badge{
+    width:34px; height:34px; border-radius:8px;
+    background:var(--marigold);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--navy); font-family:'Space Grotesk'; font-weight:700;
+    transform:rotate(-8deg);
+    box-shadow:2px 3px 0 rgba(0,0,0,0.3);
+  }
+  .nav-links{ display:flex; gap:clamp(14px,3vw,32px); }
+  .nav-links a{
+    color:var(--paper); opacity:0.85; font-size:0.95rem; font-weight:500;
+    position:relative; padding-bottom:4px;
+    transition:opacity .2s ease;
+  }
+  .nav-links a::after{
+    content:""; position:absolute; left:0; bottom:0; width:0; height:2px;
+    background:var(--marigold); transition:width .25s ease;
+  }
+  .nav-links a:hover{ opacity:1; }
+  .nav-links a:hover::after{ width:100%; }
+  @media (max-width:640px){ .nav-links{ display:none; } }
+
+  section{ position:relative; z-index:1; padding: clamp(60px, 10vw, 110px) clamp(20px,6vw,64px); }
+
+  /* ---------- HERO / CORKBOARD ---------- */
+  .hero{
+    min-height:88vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding-top: clamp(60px,10vh,100px);
+  }
+  .tape{
+    position:absolute;
+    width:120px; height:34px;
+    background:rgba(255,244,214,0.55);
+    border:1px solid rgba(255,255,255,0.4);
+    box-shadow:0 2px 6px rgba(0,0,0,0.25);
+  }
+
+  .pin-card{
+    background:var(--paper);
+    padding:10px 14px 16px;
+    box-shadow: var(--pin-shadow);
+    position:relative;
+    opacity:0;
+    transform: translateY(-60px) rotate(0deg) scale(0.8);
+  }
+  .pin-card::before{
+    content:"";
+    position:absolute; top:-9px; left:50%; transform:translateX(-50%);
+    width:16px; height:16px; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #ff8a80, #b3261e 70%);
+    box-shadow:0 3px 4px rgba(0,0,0,0.4);
+  }
+  .drop-in{ animation: pinDrop 0.8s cubic-bezier(.22,1.3,.4,1) forwards; }
+
+  @keyframes pinDrop{
+    0%{ opacity:0; transform:translateY(-140px) rotate(-4deg) scale(0.7); }
+    60%{ opacity:1; transform:translateY(6px) rotate(var(--tilt,0deg)) scale(1.03); }
+    100%{ opacity:1; transform:translateY(0) rotate(var(--tilt,0deg)) scale(1); }
+  }
+
+  .hero-title{
+    font-size: clamp(2.6rem, 7vw, 5.2rem);
+    line-height:0.98;
+    color:var(--navy);
+    --tilt:-1.5deg;
+    max-width:900px;
+  }
+  .hero-title .accent{
+    color:var(--coral);
+    font-family:'Kalam', cursive;
+    font-weight:700;
+    display:inline-block;
+    transform:rotate(-3deg);
+  }
+  .hero-sub{
+    margin-top:26px;
+    --tilt:1deg;
+    max-width:520px;
+    font-size:1.05rem;
+    color:var(--ink);
+    animation-delay:0.15s;
+  }
+  .hero-sub p{ font-weight:500; }
+  .hero-cta{
+    margin-top:38px;
+    display:flex; gap:16px; flex-wrap:wrap; justify-content:center;
+  }
+  .btn{
+    font-family:'Space Grotesk'; font-weight:600; font-size:1rem;
+    padding:14px 28px;
+    border-radius:999px;
+    border:2px solid var(--navy);
+    cursor:pointer;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .btn-primary{ background:var(--marigold); color:var(--navy); box-shadow:3px 4px 0 var(--navy); }
+  .btn-ghost{ background:transparent; color:var(--paper); border-color:var(--paper); }
+  .btn:hover{ transform:translate(-2px,-2px); }
+  .btn-primary:hover{ box-shadow:5px 6px 0 var(--navy); }
+
+  .scroll-cue{
+    margin-top:70px;
+    color:var(--paper);
+    font-family:'Space Mono';
+    font-size:0.8rem;
+    opacity:0.7;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .scroll-cue span{
+    width:1px; height:36px; background:var(--paper);
+    animation: pulse-line 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse-line{ 0%,100%{opacity:0.2; transform:scaleY(0.6);} 50%{opacity:1; transform:scaleY(1);} }
+
+  /* ---------- SECTION HEADERS ---------- */
+  .section-eyebrow{
+    font-family:'Space Mono'; font-size:0.8rem; letter-spacing:0.12em;
+    text-transform:uppercase; color:var(--marigold); opacity:0;
+  }
+  .section-title{
+    font-size:clamp(2rem,4.2vw,3rem);
+    color:var(--paper);
+    margin-top:8px;
+    opacity:0;
+  }
+  .section-heading-wrap{ max-width:640px; margin:0 auto 56px; text-align:center; }
+  .reveal{ transform:translateY(30px); transition:opacity .7s ease, transform .7s ease; }
+  .reveal.in-view{ opacity:1 !important; transform:translateY(0); }
+
+  /* ---------- FEATURES GRID ---------- */
+  .features{
+    display:grid;
+    gap:36px;
+    max-width:1180px;
+    margin:0 auto;
+    grid-template-columns:repeat(3,1fr);
+  }
+  @media (max-width:900px){ .features{ grid-template-columns:1fr; max-width:480px; } }
+
+  .feature-card{
+    border-radius:14px;
+    padding:30px 26px 34px;
+    position:relative;
+    min-height:340px;
+    display:flex; flex-direction:column;
+    transform-style:preserve-3d;
+    transition:transform .25s ease, box-shadow .25s ease;
+    opacity:0;
+  }
+  .feature-card .tag{
+    font-family:'Space Mono'; font-size:0.72rem; text-transform:uppercase;
+    letter-spacing:0.08em; padding:4px 10px; border-radius:999px;
+    width:fit-content; margin-bottom:18px;
+  }
+  .feature-card h3{ font-size:1.5rem; margin-bottom:12px; }
+  .feature-card p{ font-size:0.95rem; line-height:1.55; opacity:0.85; flex:1; }
+  .feature-card .go{
+    margin-top:18px; font-family:'Space Grotesk'; font-weight:600; font-size:0.9rem;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .feature-card .go svg{ transition:transform .2s ease; }
+  .feature-card:hover .go svg{ transform:translateX(5px); }
+
+  /* Notes sharing — sticky-note stack */
+  .card-notes{ background:#fff6c2; box-shadow:4px 6px 0 rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04); }
+  .card-notes .tag{ background:#3d3512; color:#fff6c2; }
+  .card-notes::before, .card-notes::after{
+    content:""; position:absolute; inset:0; border-radius:14px;
+    background:#ffe27a; z-index:-1;
+  }
+  .card-notes::before{ transform:rotate(-4deg) translate(6px,4px); opacity:0.85; }
+  .card-notes::after{ transform:rotate(3deg) translate(-5px,6px); background:#ffd35c; opacity:0.7; }
+  .card-notes:hover{ transform:rotate(-2deg) translateY(-6px); }
+
+  /* Event updates — flyer with calendar corner */
+  .card-events{ background:var(--paper); border:2px dashed var(--navy); }
+  .card-events .tag{ background:var(--mint); color:#04352a; }
+  .card-events .corner{
+    position:absolute; top:0; right:0; width:56px; height:56px;
+    background:var(--coral); border-radius:0 12px 0 100%;
+  }
+  .card-events .corner span{
+    position:absolute; top:8px; right:8px; color:#fff;
+    font-family:'Space Mono'; font-size:0.65rem; font-weight:700;
+  }
+  .card-events:hover{ transform:translateY(-8px) rotate(1deg); box-shadow:0 18px 30px rgba(0,0,0,0.25); }
+
+  /* Lost & Found — tear-off poster */
+  .card-lost{
+    background:var(--paper);
+    box-shadow:3px 5px 12px rgba(0,0,0,0.25);
+    padding-bottom:52px;
+  }
+  .card-lost .tag{ background:var(--coral); color:#fff; }
+  .card-lost:hover{ transform:translateY(-6px) rotate(-1deg); }
+  .tabs{
+    position:absolute; bottom:0; left:0; right:0;
+    display:flex; justify-content:space-around;
+    height:44px;
+  }
+  .tab{
+    flex:1; margin:0 2px; background:var(--navy);
+    clip-path: polygon(10% 0, 90% 0, 100% 100%, 0% 100%);
+    display:flex; align-items:flex-end; justify-content:center;
+    padding-bottom:6px;
+    transform-origin:top center;
+    transition:transform .2s ease, background .2s ease;
+    cursor:pointer;
+  }
+  .tab span{
+    writing-mode:vertical-rl;
+    color:var(--paper); font-family:'Space Mono'; font-size:0.62rem;
+    transform:rotate(180deg);
+  }
+  .tab:hover{ transform:rotate(3deg) translateY(4px); background:var(--coral); }
+
+  /* ---------- HOW IT WORKS STRIP ---------- */
+  .strip{
+    background:var(--navy);
+    margin: 40px auto 0;
+    max-width:1180px;
+    border-radius:18px;
+    padding:44px clamp(20px,4vw,50px);
+    display:flex; flex-wrap:wrap; gap:30px; justify-content:space-between;
+  }
+  .strip-item{ flex:1 1 220px; color:var(--paper); }
+  .strip-item .num{
+    font-family:'Kalam'; color:var(--marigold); font-size:2.2rem; display:block; margin-bottom:8px;
+  }
+  .strip-item h4{ font-family:'Space Grotesk'; margin-bottom:6px; }
+  .strip-item p{ font-size:0.9rem; opacity:0.75; line-height:1.5; }
+
+  /* ---------- CTA ---------- */
+  .cta-section{ text-align:center; }
+  .cta-board{
+    max-width:720px; margin:0 auto;
+    background:var(--paper); border-radius:20px;
+    padding:clamp(40px,6vw,64px);
+    box-shadow:0 20px 50px rgba(0,0,0,0.35);
+    position:relative;
+  }
+  .cta-board h2{ color:var(--navy); font-size:clamp(1.8rem,4vw,2.6rem); margin-bottom:14px; }
+  .cta-board p{ color:var(--ink); opacity:0.75; margin-bottom:28px; }
+  .pushpin-deco{
+    position:absolute; width:14px; height:14px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #ffe08a, var(--marigold) 70%);
+    box-shadow:0 2px 3px rgba(0,0,0,0.4);
+  }
+
+  footer{
+    text-align:center; padding:36px 20px 50px;
+    color:rgba(255,255,255,0.6); font-size:0.85rem;
+    font-family:'Space Mono';
+  }
+
+  ::selection{ background:var(--marigold); color:var(--navy); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
+  }
+
+  a:focus-visible, button:focus-visible, .tab:focus-visible{
+    outline:3px solid var(--marigold); outline-offset:3px;
+  }
+
+  .sr-only, .sr-live{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+
+  /* ---------- NAV AUTH ---------- */
+  .auth-area{ display:flex; align-items:center; gap:10px; }
+  .btn-nav{
+    font-family:'Space Grotesk'; font-weight:600; font-size:0.85rem;
+    padding:8px 16px; border-radius:999px; border:1.5px solid var(--paper);
+    background:transparent; color:var(--paper); cursor:pointer;
+    transition:background .2s ease, color .2s ease;
+  }
+  .btn-nav:hover{ background:rgba(255,255,255,0.14); }
+  .btn-nav-primary{ background:var(--marigold); color:var(--navy); border-color:var(--marigold); }
+  .btn-nav-primary:hover{ background:#ffc75c; }
+  @media (max-width:480px){ .btn-nav span.long{ display:none; } }
+
+  .user-pill{ display:flex; align-items:center; gap:10px; }
+  .user-avatar{
+    width:30px; height:30px; border-radius:50%; background:var(--marigold); color:var(--navy);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk'; font-weight:700; font-size:0.9rem; flex:none;
+  }
+  .user-pill span.greet{ color:var(--paper); font-size:0.88rem; }
+  .user-pill button{
+    background:transparent; border:1px solid rgba(255,255,255,0.4); color:var(--paper);
+    padding:7px 14px; border-radius:999px; font-size:0.78rem; font-family:'Space Grotesk'; font-weight:600;
+    cursor:pointer; transition:background .2s ease;
+  }
+  .user-pill button:hover{ background:rgba(255,255,255,0.14); }
+  @media (max-width:560px){ .user-pill span.greet{ display:none; } }
+
+  /* ---------- AUTH MODAL ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:200;
+    background:rgba(10,12,25,0.62);
+    backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .modal-overlay[hidden]{ display:none; }
+  .modal{
+    background:var(--paper); border-radius:16px; width:100%; max-width:420px;
+    padding:32px 28px 28px; position:relative;
+    box-shadow:0 30px 70px rgba(0,0,0,0.45);
+    animation: modalPop .28s cubic-bezier(.22,1.3,.4,1);
+  }
+  @keyframes modalPop{ from{ opacity:0; transform:scale(0.94) translateY(12px);} to{ opacity:1; transform:scale(1) translateY(0);} }
+  .modal h2{ color:var(--navy); font-size:1.6rem; margin-bottom:18px; }
+  .modal-close{
+    position:absolute; top:14px; right:14px; width:32px; height:32px; border-radius:50%;
+    background:transparent; border:none; font-size:1.4rem; line-height:1; cursor:pointer;
+    color:var(--ink); opacity:0.55; transition:opacity .2s ease, background .2s ease;
+  }
+  .modal-close:hover{ opacity:1; background:rgba(0,0,0,0.06); }
+  .modal-tabs{ display:flex; gap:4px; margin-bottom:22px; background:#eee6d3; padding:4px; border-radius:999px; }
+  .modal-tab{
+    flex:1; padding:9px 0; border-radius:999px; border:none; background:transparent;
+    font-family:'Space Grotesk'; font-weight:600; font-size:0.88rem; cursor:pointer; color:var(--ink); opacity:0.6;
+    transition:background .2s ease, color .2s ease, opacity .2s ease;
+  }
+  .modal-tab[aria-selected="true"]{ background:var(--navy); color:var(--paper); opacity:1; }
+
+  .auth-form label{
+    display:block; font-family:'Space Grotesk'; font-size:0.83rem; font-weight:600;
+    margin:14px 0 6px; color:var(--navy);
+  }
+  .auth-form label:first-of-type{ margin-top:0; }
+  .auth-form input{
+    width:100%; padding:11px 13px; border-radius:9px; border:1.5px solid #d8cfb8;
+    font-family:'Inter'; font-size:0.95rem; background:#fff; color:var(--ink);
+  }
+  .auth-form input:focus-visible{ outline:2.5px solid var(--blue); outline-offset:1px; border-color:var(--blue); }
+  .form-hint{ font-size:0.76rem; opacity:0.6; margin-top:10px; line-height:1.4; }
+  .form-error{ color:#b3261e; font-size:0.84rem; font-weight:600; min-height:1.2em; margin-top:10px; }
+  .full-width{ width:100%; margin-top:16px; text-align:center; }
+
+  /* ---------- LOCKED FEATURE OVERLAY ---------- */
+  .lock-layer{
+    position:absolute; inset:0; z-index:6; border-radius:inherit;
+    background:rgba(250,246,236,0.92);
+    backdrop-filter:blur(2px);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; gap:10px; padding:24px;
+  }
+  .lock-layer svg{ opacity:0.7; }
+  .lock-layer p{ font-size:0.86rem; font-weight:600; color:var(--navy); max-width:190px; line-height:1.4; }
+  .btn-unlock{
+    font-family:'Space Grotesk'; font-weight:600; font-size:0.84rem;
+    padding:9px 22px; border-radius:999px; background:var(--navy); color:var(--paper);
+    border:none; cursor:pointer; transition:background .2s ease;
+  }
+  .btn-unlock:hover{ background:#2a3358; }
+  body.authenticated .lock-layer{ display:none; }
+
+  button.go{
+    background:none; border:none; padding:0; cursor:pointer; color:inherit;
+    font-family:inherit; text-align:left;
+  }
+  .sample-list{
+    margin-top:16px; border-top:1px dashed rgba(0,0,0,0.18); padding-top:14px;
+    display:flex; flex-direction:column; gap:9px;
+  }
+  .sample-list li{ display:flex; justify-content:space-between; gap:10px; font-size:0.84rem; }
+  .sample-list .meta{ opacity:0.55; font-family:'Space Mono'; font-size:0.72rem; white-space:nowrap; }
+  .sample-list.is-loading, .sample-list.is-empty{ font-size:0.84rem; opacity:0.6; display:block; padding-top:14px; border-top:1px dashed rgba(0,0,0,0.18); }
+
+  .add-form{ margin-top:14px; display:flex; flex-direction:column; gap:8px; }
+  .add-form input{
+    padding:9px 11px; border-radius:8px; border:1.5px solid #d8cfb8;
+    font-size:0.85rem; font-family:'Inter'; background:#fff; color:var(--ink);
+  }
+  .add-form input:focus-visible{ outline:2.5px solid var(--blue); outline-offset:1px; border-color:var(--blue); }
+  .btn-add{
+    align-self:flex-start; font-family:'Space Grotesk'; font-weight:600; font-size:0.8rem;
+    padding:7px 18px; border-radius:999px; border:none; background:var(--navy);
+    color:var(--paper); cursor:pointer; transition:background .2s ease;
+  }
+  .btn-add:hover{ background:#2a3358; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand"><div class="brand-badge">CC</div> Campus Companion</div>
+  <div class="nav-links">
+    <a href="#notes">Notes</a>
+    <a href="#events">Events</a>
+    <a href="#lostfound">Lost &amp; Found</a>
+  </div>
+  <div class="auth-area">
+    <div class="auth-buttons" id="authButtons" style="display:flex; gap:10px;">
+      <button class="btn-nav" id="openLoginBtn" type="button">Log in</button>
+      <button class="btn-nav btn-nav-primary" id="openSignupBtn" type="button"><span class="long">Sign </span>up</button>
+    </div>
+    <div class="user-pill" id="userPill" hidden>
+      <span class="user-avatar" id="userAvatar" aria-hidden="true">D</span>
+      <span class="greet" id="userPillName">Hi there</span>
+      <button type="button" id="logoutBtn">Log out</button>
+    </div>
+  </div>
+</nav>
+
+<div id="authStatus" class="sr-live" aria-live="polite"></div>
+
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" id="authModal">
+    <button class="modal-close" id="modalCloseBtn" type="button" aria-label="Close login dialog">&times;</button>
+    <h2 id="modalTitle" class="handwritten">Welcome back</h2>
+    <div class="modal-tabs" role="tablist" aria-label="Choose log in or sign up">
+      <button class="modal-tab" role="tab" id="tabLogin" aria-selected="true" aria-controls="panelLogin" type="button">Log in</button>
+      <button class="modal-tab" role="tab" id="tabSignup" aria-selected="false" tabindex="-1" aria-controls="panelSignup" type="button">Sign up</button>
+    </div>
+
+    <form class="auth-form" id="panelLogin" role="tabpanel" aria-labelledby="tabLogin" novalidate>
+      <label for="loginEmail">Campus email</label>
+      <input id="loginEmail" name="email" type="email" autocomplete="email" required>
+      <label for="loginPassword">Password</label>
+      <input id="loginPassword" name="password" type="password" autocomplete="current-password" minlength="6" required>
+      <p class="form-hint">Demo login — accounts live in this browser tab only and reset on reload.</p>
+      <div class="form-error" id="loginError" role="alert"></div>
+      <button type="submit" class="btn btn-primary full-width">Log in</button>
+    </form>
+
+    <form class="auth-form" id="panelSignup" role="tabpanel" aria-labelledby="tabSignup" novalidate hidden>
+      <label for="signupName">Full name</label>
+      <input id="signupName" name="name" type="text" autocomplete="name" required>
+      <label for="signupEmail">Campus email</label>
+      <input id="signupEmail" name="email" type="email" autocomplete="email" required>
+      <label for="signupPassword">Password</label>
+      <input id="signupPassword" name="password" type="password" autocomplete="new-password" minlength="6" required>
+      <p class="form-hint">Use any email — this demo doesn't send real mail.</p>
+      <div class="form-error" id="signupError" role="alert"></div>
+      <button type="submit" class="btn btn-primary full-width">Create account</button>
+    </form>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="tape" style="top:12%; left:8%; transform:rotate(-14deg);"></div>
+  <div class="tape" style="top:20%; right:6%; transform:rotate(10deg);"></div>
+
+  <div class="pin-card drop-in hero-title handwritten" style="--tilt:-1.5deg;">
+    Everything campus,<br>one <span class="accent">pinboard.</span>
+  </div>
+
+  <div class="pin-card drop-in hero-sub" style="--tilt:1deg; animation-delay:0.18s;">
+    <p>Share notes, catch every event, and reunite with your lost stuff — all in the app your whole campus already checks.</p>
+  </div>
+
+  <div class="hero-cta">
+    <button class="btn btn-primary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Explore Features</button>
+    <a href="#cta" class="btn btn-ghost">Get the App</a>
+  </div>
+
+  <div class="scroll-cue"><span></span>scroll</div>
+</section>
+
+<section id="features">
+  <div class="section-heading-wrap">
+    <div class="section-eyebrow reveal">what's on the board</div>
+    <h2 class="section-title reveal">Three tools. One campus life.</h2>
+  </div>
+
+  <div class="features">
+
+    <article id="notes" class="feature-card card-notes reveal">
+      <div class="lock-layer">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1c2340" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        <p>Log in to browse notes shared by your classmates</p>
+        <button type="button" class="btn-unlock" data-open-auth="login">Log in</button>
+      </div>
+      <span class="tag">Notes Sharing</span>
+      <h3>Never miss a lecture again</h3>
+      <p>Upload, browse, and download class notes shared by students in your courses. Search by subject, professor, or week — the study group that never sleeps.</p>
+      <button type="button" class="go" data-feature="notes" aria-expanded="false" aria-controls="notesSample">Browse notes
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <ul id="notesSample" class="sample-list" hidden></ul>
+      <form id="addNoteForm" class="add-form" hidden>
+        <label for="noteTitle" class="sr-only">Note title</label>
+        <input id="noteTitle" type="text" placeholder="Note title" required>
+        <label for="noteSubject" class="sr-only">Subject</label>
+        <input id="noteSubject" type="text" placeholder="Subject, e.g. Thermodynamics">
+        <button type="submit" class="btn-add">Add note</button>
+        <div class="form-error" id="addNoteError" role="alert"></div>
+      </form>
+    </article>
+
+    <article id="events" class="feature-card card-events reveal">
+      <div class="lock-layer">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1c2340" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        <p>Log in to see live event updates</p>
+        <button type="button" class="btn-unlock" data-open-auth="login">Log in</button>
+      </div>
+      <div class="corner"><span>NEW</span></div>
+      <span class="tag">Event Updates</span>
+      <h3>Know what's happening, today</h3>
+      <p>Club meetings, guest lectures, hackathons, fests — get live updates and reminders so you're never the one asking "wait, that was today?"</p>
+      <button type="button" class="go" data-feature="events" aria-expanded="false" aria-controls="eventsSample">See what's on
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <ul id="eventsSample" class="sample-list" hidden></ul>
+      <form id="addEventForm" class="add-form" hidden>
+        <label for="eventTitle" class="sr-only">Event title</label>
+        <input id="eventTitle" type="text" placeholder="Event title" required>
+        <label for="eventWhen" class="sr-only">When</label>
+        <input id="eventWhen" type="text" placeholder="When, e.g. Fri · 6:00 PM">
+        <button type="submit" class="btn-add">Add event</button>
+        <div class="form-error" id="addEventError" role="alert"></div>
+      </form>
+    </article>
+
+    <article id="lostfound" class="feature-card card-lost reveal">
+      <span class="tag">Lost &amp; Found</span>
+      <h3>Lost it? Someone probably found it.</h3>
+      <p>Post what you lost or found on campus. Smart matching connects the two sides fast — from water bottles to student IDs.</p>
+      <span class="go">Post an item
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </span>
+      <div class="tabs">
+        <div class="tab" tabindex="0"><span>CALL ME</span></div>
+        <div class="tab" tabindex="0"><span>CALL ME</span></div>
+        <div class="tab" tabindex="0"><span>CALL ME</span></div>
+        <div class="tab" tabindex="0"><span>CALL ME</span></div>
+        <div class="tab" tabindex="0"><span>CALL ME</span></div>
+      </div>
+    </article>
+
+  </div>
+
+  <div class="strip reveal">
+    <div class="strip-item">
+      <span class="num">1.</span>
+      <h4>Sign up with your campus email</h4>
+      <p>Verified students only — no strangers wandering your notes feed.</p>
+    </div>
+    <div class="strip-item">
+      <span class="num">2.</span>
+      <h4>Follow your courses &amp; clubs</h4>
+      <p>Your board fills up with exactly what's relevant to you.</p>
+    </div>
+    <div class="strip-item">
+      <span class="num">3.</span>
+      <h4>Post, browse, get notified</h4>
+      <p>Share a note, post a lost item, RSVP to an event — all in seconds.</p>
+    </div>
+  </div>
+</section>
+
+<section id="cta" class="cta-section">
+  <div class="cta-board reveal">
+    <div class="pushpin-deco" style="top:16px; left:50%; transform:translateX(-50%);"></div>
+    <h2 class="handwritten">Your campus is more fun organized.</h2>
+    <p>Join the pinboard everyone on campus is already using.</p>
+    <button class="btn btn-primary" style="font-size:1.05rem;">Get Campus Companion — It's Free</button>
+  </div>
+</section>
+
+<footer>
+  © 2026 Campus Companion · built for the student, not the syllabus
+</footer>
+
+<script>
+  // Stagger hero pin-drop timing already handled via CSS animation-delay.
+
+  // Reveal-on-scroll for sections
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry, idx) => {
+      if(entry.isIntersecting){
+        const el = entry.target;
+        const siblingsBefore = Array.from(el.parentElement.children).indexOf(el);
+        el.style.transitionDelay = (Math.min(siblingsBefore,4) * 90) + 'ms';
+        el.style.opacity = 1;
+        el.classList.add('in-view');
+        io.unobserve(el);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(el => io.observe(el));
+
+  // Subtle tilt-follow on feature cards
+  document.querySelectorAll('.feature-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      card.style.transform = `translateY(-6px) rotate(${x*3}deg) scale(1.015)`;
+    });
+    card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+  });
+
+  // Lost & found tabs: little "torn off" feedback
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      tab.style.transform = 'translateY(30px) rotate(8deg)';
+      tab.style.opacity = '0';
+      setTimeout(() => {
+        tab.style.transition = 'all .4s ease';
+        tab.style.transform = '';
+        tab.style.opacity = '1';
+      }, 500);
+    });
+  });
+
+  // Randomize a couple of tape rotations for hand-placed feel
+  document.querySelectorAll('.tape').forEach(t => {
+    const r = (Math.random() * 16 - 8).toFixed(1);
+    t.style.transform += ` rotate(${r}deg)`;
+  });
+
+  /* ================= AUTH — talks to the real backend in server.py ================= */
+  let currentUser = null;
+  let lastFocusedTrigger = null;
+
+  const modalOverlay   = document.getElementById('modalOverlay');
+  const authModal      = document.getElementById('authModal');
+  const modalCloseBtn  = document.getElementById('modalCloseBtn');
+  const tabLogin        = document.getElementById('tabLogin');
+  const tabSignup       = document.getElementById('tabSignup');
+  const panelLogin      = document.getElementById('panelLogin');
+  const panelSignup     = document.getElementById('panelSignup');
+  const loginError      = document.getElementById('loginError');
+  const signupError     = document.getElementById('signupError');
+  const authStatus      = document.getElementById('authStatus');
+  const authButtons     = document.getElementById('authButtons');
+  const userPill        = document.getElementById('userPill');
+  const userPillName    = document.getElementById('userPillName');
+  const userAvatar      = document.getElementById('userAvatar');
+  const modalTitle      = document.getElementById('modalTitle');
+  const notesList       = document.getElementById('notesSample');
+  const eventsList      = document.getElementById('eventsSample');
+  const addNoteForm     = document.getElementById('addNoteForm');
+  const addEventForm    = document.getElementById('addEventForm');
+  const addNoteError    = document.getElementById('addNoteError');
+  const addEventError   = document.getElementById('addEventError');
+
+  async function api(path, opts = {}){
+    const res = await fetch(path, {
+      method: opts.method || 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    let data = {};
+    try{ data = await res.json(); }catch(_e){ /* empty body */ }
+    if(!res.ok){
+      const err = new Error(data.error || ('Request failed (' + res.status + ')'));
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function renderNotes(notes){
+    notesList.classList.remove('is-loading');
+    if(notes.length === 0){
+      notesList.classList.add('is-empty');
+      notesList.textContent = 'No notes yet — add the first one below.';
+      return;
+    }
+    notesList.classList.remove('is-empty');
+    notesList.innerHTML = notes.map(n =>
+      `<li><span>${escapeHtml(n.title)}${n.subject ? ' — ' + escapeHtml(n.subject) : ''}</span><span class="meta">${escapeHtml(n.author)}</span></li>`
+    ).join('');
+  }
+
+  function renderEvents(events){
+    eventsList.classList.remove('is-loading');
+    if(events.length === 0){
+      eventsList.classList.add('is-empty');
+      eventsList.textContent = 'No events yet — add the first one below.';
+      return;
+    }
+    eventsList.classList.remove('is-empty');
+    eventsList.innerHTML = events.map(ev =>
+      `<li><span>${escapeHtml(ev.title)}</span><span class="meta">${escapeHtml(ev.event_date || '')}</span></li>`
+    ).join('');
+  }
+
+  function switchTab(tab){
+    const loginActive = tab === 'login';
+    tabLogin.setAttribute('aria-selected', String(loginActive));
+    tabSignup.setAttribute('aria-selected', String(!loginActive));
+    tabLogin.tabIndex = loginActive ? 0 : -1;
+    tabSignup.tabIndex = loginActive ? -1 : 0;
+    panelLogin.hidden = !loginActive;
+    panelSignup.hidden = loginActive;
+    modalTitle.textContent = loginActive ? 'Welcome back' : 'Join your campus';
+  }
+
+  function openAuthModal(trigger, tab){
+    lastFocusedTrigger = trigger || document.activeElement;
+    modalOverlay.hidden = false;
+    switchTab(tab || 'login');
+    document.addEventListener('keydown', onModalKeydown);
+    const firstField = tab === 'signup' ? document.getElementById('signupName') : document.getElementById('loginEmail');
+    setTimeout(() => firstField && firstField.focus(), 30);
+  }
+
+  function closeAuthModal(){
+    modalOverlay.hidden = true;
+    document.removeEventListener('keydown', onModalKeydown);
+    loginError.textContent = '';
+    signupError.textContent = '';
+    if(lastFocusedTrigger) lastFocusedTrigger.focus();
+  }
+
+  function onModalKeydown(e){
+    if(e.key === 'Escape'){ closeAuthModal(); return; }
+    if(e.key === 'Tab'){
+      const focusable = Array.from(authModal.querySelectorAll('button, input'))
+        .filter(el => el.offsetParent !== null);
+      if(focusable.length === 0) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    }
+  }
+
+  tabLogin.addEventListener('click', () => { switchTab('login'); document.getElementById('loginEmail').focus(); });
+  tabSignup.addEventListener('click', () => { switchTab('signup'); document.getElementById('signupName').focus(); });
+  [tabLogin, tabSignup].forEach(tab => {
+    tab.addEventListener('keydown', (e) => {
+      if(e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
+        const goingToSignup = tab === tabLogin;
+        switchTab(goingToSignup ? 'signup' : 'login');
+        (goingToSignup ? tabSignup : tabLogin).focus();
+      }
+    });
+  });
+
+  modalCloseBtn.addEventListener('click', closeAuthModal);
+  modalOverlay.addEventListener('click', (e) => { if(e.target === modalOverlay) closeAuthModal(); });
+
+  document.getElementById('openLoginBtn').addEventListener('click', (e) => openAuthModal(e.currentTarget, 'login'));
+  document.getElementById('openSignupBtn').addEventListener('click', (e) => openAuthModal(e.currentTarget, 'signup'));
+  document.querySelectorAll('[data-open-auth]').forEach(btn => {
+    btn.addEventListener('click', (e) => openAuthModal(e.currentTarget, btn.dataset.openAuth));
+  });
+
+  function applyLoggedInUI(user, opts = {}){
+    currentUser = user;
+    document.body.classList.add('authenticated');
+    authButtons.style.display = 'none';
+    userPill.hidden = false;
+    userPillName.textContent = 'Hi, ' + user.name.split(' ')[0];
+    userAvatar.textContent = user.name.charAt(0).toUpperCase();
+    if(!opts.silent){
+      closeAuthModal();
+      panelLogin.reset();
+      panelSignup.reset();
+      authStatus.textContent = 'Logged in as ' + user.name + '. Notes and events are now unlocked.';
+    }
+  }
+
+  function applyLoggedOutUI(opts = {}){
+    currentUser = null;
+    document.body.classList.remove('authenticated');
+    authButtons.style.display = 'flex';
+    userPill.hidden = true;
+    notesList.hidden = true; notesList.innerHTML = ''; notesList.classList.remove('is-loading','is-empty');
+    eventsList.hidden = true; eventsList.innerHTML = ''; eventsList.classList.remove('is-loading','is-empty');
+    addNoteForm.hidden = true;
+    addEventForm.hidden = true;
+    document.querySelectorAll('.go[aria-expanded]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+    if(!opts.silent) authStatus.textContent = 'Logged out.';
+  }
+
+  panelLogin.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    try{
+      const data = await api('/api/login', { method: 'POST', body: { email, password } });
+      loginError.textContent = '';
+      applyLoggedInUI(data.user);
+    }catch(err){ loginError.textContent = err.message; }
+  });
+
+  panelSignup.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    try{
+      const data = await api('/api/signup', { method: 'POST', body: { name, email, password } });
+      signupError.textContent = '';
+      applyLoggedInUI(data.user);
+    }catch(err){ signupError.textContent = err.message; }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try{ await api('/api/logout', { method: 'POST' }); }catch(_e){ /* ignore */ }
+    applyLoggedOutUI();
+  });
+
+  // Notes / Events "go" buttons: require a real session, then load + allow adding
+  document.querySelectorAll('.go[data-feature]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if(!currentUser){ openAuthModal(btn, 'login'); return; }
+      const feature = btn.dataset.feature;
+      const panel = document.getElementById(btn.getAttribute('aria-controls'));
+      const form = feature === 'notes' ? addNoteForm : addEventForm;
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      const nowExpanded = !expanded;
+      btn.setAttribute('aria-expanded', String(nowExpanded));
+      panel.hidden = !nowExpanded;
+      form.hidden = !nowExpanded;
+      if(nowExpanded){
+        panel.classList.add('is-loading');
+        panel.textContent = 'Loading…';
+        try{
+          if(feature === 'notes') renderNotes((await api('/api/notes')).notes);
+          else renderEvents((await api('/api/events')).events);
+        }catch(err){
+          if(err.status === 401){ applyLoggedOutUI(); openAuthModal(btn, 'login'); }
+          else{ panel.classList.add('is-empty'); panel.textContent = err.message; }
+        }
+      }
+    });
+  });
+
+  addNoteForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('noteTitle').value.trim();
+    const subject = document.getElementById('noteSubject').value.trim();
+    try{
+      await api('/api/notes', { method: 'POST', body: { title, subject } });
+      addNoteError.textContent = '';
+      addNoteForm.reset();
+      renderNotes((await api('/api/notes')).notes);
+    }catch(err){ addNoteError.textContent = err.message; }
+  });
+
+  addEventForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('eventTitle').value.trim();
+    const event_date = document.getElementById('eventWhen').value.trim();
+    try{
+      await api('/api/events', { method: 'POST', body: { title, event_date } });
+      addEventError.textContent = '';
+      addEventForm.reset();
+      renderEvents((await api('/api/events')).events);
+    }catch(err){ addEventError.textContent = err.message; }
+  });
+
+  // Restore session on page load (real persistence via the server cookie)
+  (async function initSession(){
+    try{
+      const data = await api('/api/me');
+      applyLoggedInUI(data.user, { silent: true });
+    }catch(_e){ applyLoggedOutUI({ silent: true }); }
+  })();
+</script>
+
+</body>
+</html>
