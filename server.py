@@ -180,22 +180,23 @@ class Handler(BaseHTTPRequestHandler):
         pass  # quiet console — remove this line to see request logs
 
     # ---------- routing ----------
-    def do_GET(self):
-       
-        path = urlparse(self.path).path
-        if path in ("/", "/index.html", "/campus-companion.html"):
-            return self.serve_frontend()
-        if path == "/api/me":
-            return self.handle_me()
-        if path == "/api/notes":
-            return self.handle_list_notes()
-        if path == "/api/events":
-            return self.handle_list_events()
-            if path == "/api/search":
-    return self.handle_search_notes()
+        def do_GET(self):
+    path = urlparse(self.path).path
 
-        self.send_json(404, {"error": "Not found"})
-     
+    if path in ("/", "/index.html", "/campus-companion.html"):
+        return self.serve_frontend()
+
+    if path == "/api/me":
+        return self.handle_me()
+
+    if path == "/api/notes":
+        return self.handle_list_notes()
+
+    if path == "/api/search":
+        return self.handle_search_notes()
+
+    if path == "/api/events":
+        return self.handle_list_events()
 
     def do_POST(self):
         path = urlparse(self.path).path
