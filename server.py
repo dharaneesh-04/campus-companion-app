@@ -181,24 +181,24 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---------- routing ----------
    def do_GET(self):
-    path = urlparse(self.path).path
+       path = urlparse(self.path).path
 
-    if path in ("/", "/index.html", "/campus-companion.html"):
-        return self.serve_frontend()
+       if path in ("/", "/index.html", "/campus-companion.html"):
+          return self.serve_frontend()
 
-    if path == "/api/me":
-        return self.handle_me()
+       if path == "/api/me":
+          return self.handle_me()
 
-    if path == "/api/notes":
-        return self.handle_list_notes()
+       if path == "/api/notes":
+          return self.handle_list_notes()
 
-    if path == "/api/search":
-        return self.handle_search_notes()
+       if path == "/api/search":
+          return self.handle_search_notes()
 
-    if path == "/api/events":
-        return self.handle_list_events()
+      if path == "/api/events":
+         return self.handle_list_events()
 
-    self.send_json(404, {"error": "Not found"})
+      self.send_json(404, {"error": "Not found"})
        
     def do_POST(self):
         path = urlparse(self.path).path
