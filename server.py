@@ -23,7 +23,7 @@ import hashlib
 import sqlite3
 from http import cookies
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "campus.db")
@@ -36,6 +36,7 @@ PBKDF2_ITERATIONS = 100_000
 # ---------------------------------------------------------------- database
 
 def get_db():
+  
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
@@ -180,6 +181,7 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---------- routing ----------
     def do_GET(self):
+       
         path = urlparse(self.path).path
         if path in ("/", "/index.html", "/campus-companion.html"):
             return self.serve_frontend()
@@ -190,6 +192,8 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/events":
             return self.handle_list_events()
         self.send_json(404, {"error": "Not found"})
+        elif path == "/api/search":
+    return self.handle_search_notes()
 
     def do_POST(self):
         path = urlparse(self.path).path
@@ -322,6 +326,30 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(200, {"notes": [dict(r) for r in rows]})
         finally:
             conn.close()
+            def handle_search_notes(self):
+    conn = get_db()
+    try:
+        user = current_user(conn, self)
+        if not user:
+            return self.send_json(401, {"error": "Login required"})
+
+        query = parse_qs(urlparse(self.path).query)
+        keyword = query.get("q", [""])[0]
+
+        rows = conn.execute("""
+            SELECT title, subject
+            FROM notes
+            WHERE title LIKE ?
+               OR subject LIKE ?
+            ORDER BY created_at DESC
+        """, (f"%{keyword}%", f"%{keyword}%")).fetchall()
+
+        self.send_json(200, {
+            "notes": [dict(r) for r in rows]
+        })
+
+    finally:
+        conn.close()
 
     def handle_create_note(self):
         conn = get_db()
